@@ -1,4 +1,4 @@
-Name: cooved
+Name: gooc-gen
 Version: head
 Origin: git://github.com/shamanas/gooc-gen
 Description: ooc binding generator based on the ooc GObject-Introspection binding, ooc-gi

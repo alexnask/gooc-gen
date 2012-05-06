@@ -14,7 +14,7 @@ Requirements
 Usage
 -----
 
-Use the --help option to get a list of options you need to run gooc-gen
+Use the -help option to get a list of options you need to run gooc-gen
 
 Notes
 -----
