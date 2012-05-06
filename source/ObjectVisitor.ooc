@@ -32,46 +32,12 @@ ObjectVisitor: class extends Visitor {
 
         writer uw(" {\n\n") . indent()
 
-        // Create an array of PropertyVisitors that will be filled when iterating through methods
-        properties := ArrayList<PropertyVisitor> new(info getNProperties())
         // Write our methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-
-            if(method getFlags() & FunctionInfoFlags isGetter?) {
-                // If this function is a getter, we try to find a property in our array that matches it else we add it
-                prop := visitorFor(properties, method getProperty())
-                if(prop) {
-                    prop getter = info getMethod(i)
-                } else {
-                    prop := PropertyVisitor new(method getProperty())
-                    prop getter = info getMethod(i)
-                    properties add(prop)
-                }
-            } else if(method getFlags() & FunctionInfoFlags isSetter?) {
-                // Same here
-                prop := visitorFor(properties, method getProperty())
-                if(prop) {
-                    prop setter = info getMethod(i)
-                } else {
-                    prop := PropertyVisitor new(method getProperty())
-                    prop setter = info getMethod(i)
-                    properties add(prop)
-                }
-            }
-
             FunctionVisitor new(method, info) write(writer)
             method unref()
         }
-        // Write our properties (they call methods under the hood)
-        properties each(|visitor|
-            visitor write(writer)
-            visitor info unref()
-            visitor getter unref()
-            visitor setter unref()
-            gc_free(visitor)
-        )
-        gc_free(properties)
 
         writer uw('\n') . dedent() . w("}\n\n")
     }
