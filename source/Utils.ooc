@@ -47,10 +47,10 @@ extend String {
         }
     }
 
-    toCamelCase: func -> This {
+    toCamelCase: func(delim := '_') -> This {
         ret := ""
         first := true
-        this split('_') each(|str|
+        this split(delim) each(|str|
             if(first) first = false
             else if(str size > 0) {
                 str _buffer data[0] = str[0] toUpper()

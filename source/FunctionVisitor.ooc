@@ -13,10 +13,11 @@ FunctionVisitor: class extends Visitor {
     write: func(writer: OocWriter) {
         name := info getName()
         isStatic? := false
+        isConstructor? := info getFlags() & FunctionInfoFlags isConstructor?
         suffix: String = null
 
         // This is pretty naive but at the moment only constructors are detected as static, I have found no other way to do it D:
-        if(parent && info getFlags() & FunctionInfoFlags isConstructor?) {
+        if(parent && isConstructor?) {
             isStatic? = true
             suffix = name toString()
             name = "new" toCString() // c"new"
@@ -45,7 +46,9 @@ FunctionVisitor: class extends Visitor {
 
         if(!first) writer uw(")")
         returnType := info getReturnType()
-        if(returnType && (str := returnType toString()) != "Void") {
+        if(isConstructor? && parent) {
+            writer uw(" -> This")
+        } else if(returnType && (str := returnType toString()) != "Void") {
             writer uw(" -> %s" format(str))
         }
         writer uw("\n")
