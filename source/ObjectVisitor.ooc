@@ -1,5 +1,5 @@
 use gi
-import gi/[FunctionInfo, ObjectInfo, ArgInfo, InterfaceInfo, PropertyInfo]
+import gi/[FunctionInfo, ObjectInfo, ArgInfo, InterfaceInfo, PropertyInfo, ConstantInfo]
 import OocWriter, Visitor, FunctionVisitor, PropertyVisitor, Utils
 import structs/ArrayList
 
@@ -37,6 +37,11 @@ ObjectVisitor: class extends Visitor {
             method := info getMethod(i)
             FunctionVisitor new(method, info) write(writer)
             method unref()
+        }
+        // Write our constants
+        for(i in 0 .. info getNConstants()) {
+            constant := info getConstant(i)
+            constant unref()
         }
 
         writer uw('\n') . dedent() . w("}\n\n")
