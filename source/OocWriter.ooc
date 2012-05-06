@@ -22,4 +22,12 @@ OocWriter: class extends FileWriter {
     w: func~char(c: Char) {
         this write("    " times(tabLevel)) .write(c)
     }
+
+    uw: func(s: String) {
+        write(s)
+    }
+
+    uw: func~char(c: Char) {
+        write(c)
+    }
 }
