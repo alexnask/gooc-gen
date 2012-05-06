@@ -1,17 +1,17 @@
 use gi
 import gi/[FunctionInfo, ObjectInfo, ArgInfo, InterfaceInfo]
-import OocWriter, Visitor, FunctionVisitor
+import OocWriter, Visitor, FunctionVisitor, Utils
 
 ObjectVisitor: class extends Visitor {
     info: ObjectInfo
     init: func(=info)
 
     write: func(writer: OocWriter) {
-        name := (info getName() toString() == "Object") ? "_Object" : info getName() toString()
+        name := info getName() toString() escapeOocTypes()
         writer w("%s: cover from %s*" format(name, info getTypeName()))
         parent := info getParent()
         if(parent) {
-            parentName := (parent getName() toString() == "Object") ? "_Object" : parent getName() toString()
+            parentName := parent getName() toString() escapeOocTypes()
             writer uw(" extends %s" format(parentName))
         }
         parent unref()
@@ -37,6 +37,6 @@ ObjectVisitor: class extends Visitor {
             method unref()
         }
 
-        writer dedent() . w("}\n\n")
+        writer uw('\n') . dedent() . w("}\n\n")
     }
 }

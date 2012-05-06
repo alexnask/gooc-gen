@@ -1,6 +1,6 @@
 use gi
-import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo]
-import OocWriter, Visitor
+import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo, ArgInfo]
+import OocWriter, Visitor, Utils
 
 FunctionVisitor: class extends Visitor {
     info: FunctionInfo
@@ -21,12 +21,33 @@ FunctionVisitor: class extends Visitor {
             suffix = name toString()
             name = "new" toCString() // c"new"
         }
-        writer w("%s: %sextern(%s) func %s(" format(name, (isStatic?) ? "static " : "", info getSymbol(), suffix ? "~" + suffix + " " : ""))
+        writer w("%s: %sextern(%s) func" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol()))
+        if(suffix) writer uw(" ~" + suffix)
 
+        first := true
         for(i in 0 .. info getNArgs()) {
-            arg :=  info getArg(i)
+            if(first) {
+                first = false
+                writer uw("(")
+            }
+            else writer uw(", ")
+
+            arg := info getArg(i)
+            type := arg getType() toString()
+            argName := arg getName()
+            if(argName) {
+                writer uw(argName toString() + " : " + type)
+            } else {
+                writer uw(type)
+            }
+            arg unref()
         }
 
-        writer uw(")\n\n")
+        if(!first) writer uw(")")
+        returnType := info getReturnType()
+        if(returnType && (str := returnType toString()) != "Void") {
+            writer uw(" -> %s" format(str))
+        }
+        writer uw("\n")
     }
 }
