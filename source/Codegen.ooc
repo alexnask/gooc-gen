@@ -16,8 +16,29 @@ Codegen: class {
     }
 
     run: func {
-        // Here is where we do everything
-        error: Error*
+        // First, we determine wich namespaces to generate bindings for
+        // Note: this does not really work but anyway :p
+        if(!namespaces) {
+            if(verbose?) "No namespaces given, assuming loaded ones" println()
+            // If the user has chosen what namespaces he wants, we use them, in the opposite case we get all that are loaded in the repository
+            loaded := repo getLoadedNamespaces()
+            if(loaded) {
+                i := 0
+                while(loaded[i]) {
+                    ns := loaded[i] toString()
+                    if(namespaces indexOf(ns) < 0) namespaces add(ns)
+                    if(verbose?) "Loaded namespace %s added to namespace list" format(ns) println()
+                    i += 1
+                }
+            }
+            if(verbose?) "Namespace list populated" println()
+        }
+        // We load the namespaces in the repository
+        loadNamespaces()    
+    }
+
+    loadNamespaces: func {
+        error: Error* = null
         if(namespaces) {
             // Go through the namespaces
             namespaces each(|nameVer|
@@ -28,7 +49,9 @@ Codegen: class {
                 // Require the repository to have them
                 repo require(name, ver, RepositoryLoadFlags lazy, error&)
                 if(error) {
-                    raise("Could not load namespace %s version %s. Reason: %s" format(name, ver, error@ message))
+                    if(error@ message) raise("Could not load namespace %s version %s. Reason: %s" format(name, ver, error@ message))
+                    else raise("Could not load namespace %s version %s for an unknown reason" format(name, ver))
+                    error@ free()
                 }
 
                 // If we have been passed the option to, we add the namespace's dependencies to the namespace list
