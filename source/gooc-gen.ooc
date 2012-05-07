@@ -12,14 +12,15 @@ main: func(args: ArrayList<String>) {
             -namespaces=<ns> a comma speratated list of namespaces gooc-gen will generate bindings for. A namespace is symbolized as name-version. If unspecified, all namespaces will be generated\n\
             -with-dependencies will cause gooc-gen to load the dependencies of the selected namespaces and generate binding code for them too\n\
             -v enables verbose mode (warning: lots of data will be displayed)\n\
-        dest is the binding file gooc-gen will generate\n" format(opts get("self")) println()
+        dest is the directory gooc-gen will generate files in\n" format(opts get("self")) println()
     } else if(opts args getSize() != 1) {
-        "Please give gooc-gen exactly one destination file to write to." println()
+        "Please give gooc-gen exactly one destination directory to write to." println()
     } else {
         // Determine te source path
         selfFile := File new(opts get("self"))
         source := opts set?("source") ? opts get("source") : ((selfFile file?()) ? selfFile getAbsoluteFile() parent() path : null)
-        if(!source) raise("Could not determine source directory.")
+        if(!source || !File new(source) dir?()) raise("Could not determine source directory.")
+        if(!File new(opts args[0]) dir?()) raise("Destination provided is not a valid directory.")
         // Determine the namespaces to generate bindings for
         ns: ArrayList<String>
         if(opts set?("namespaces")) ns = opts get("namespaces") split(',')
