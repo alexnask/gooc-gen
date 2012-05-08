@@ -131,4 +131,3 @@ Codegen: class {
         writer uw('\n')
     }
 }
-// TODO: fix weird bugs, RegisteredTypeInfo geTypeName sometimes returns null :-/

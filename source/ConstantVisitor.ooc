@@ -2,7 +2,6 @@ use gi
 import gi/[RegisteredTypeInfo, TypeInfo, ConstantInfo, Repository]
 import OocWriter, Visitor, Utils
 
-// Gotta find true extern name :(
 ConstantVisitor: class extends Visitor {
     info: ConstantInfo
     parent: RegisteredTypeInfo = null

@@ -3,7 +3,6 @@ import gi/[FunctionInfo, EnumInfo, Repository]
 import OocWriter, Visitor, FunctionVisitor, Utils
 import structs/ArrayList
 
-// In the generated GLib binding, the typename of enums are null. WHY?! (Only happens in GLib)
 EnumVisitor: class extends Visitor {
     info: EnumInfo
     init: func(=info)
