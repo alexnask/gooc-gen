@@ -1,7 +1,8 @@
 use gi
-import gi/[RegisteredTypeInfo, TypeInfo, ConstantInfo]
+import gi/[RegisteredTypeInfo, TypeInfo, ConstantInfo, Repository]
 import OocWriter, Visitor, Utils
 
+// Gotta find true extern name :(
 ConstantVisitor: class extends Visitor {
     info: ConstantInfo
     parent: RegisteredTypeInfo = null
@@ -10,7 +11,9 @@ ConstantVisitor: class extends Visitor {
 
     write: func(writer: OocWriter) {
         // Straight-forward: If we have a parent, then we are a static member else we are just a global constant
-        if(parent) writer w("%s : static const %s\n" format(info getName() toString() toCamelCase(), info getType() toString()))
-        else writer w("%s : const %s\n" format(info getName() toString() toCamelCase(), info getType() toString()))
+        // girepository doesnt give us any info on the c symbol of the constant, so we capitalize the prefix of its namespace and preprend it followed by an undersore before its name, it should do the trick :D
+        cname := "%s_%s" format(Repository getCPrefix(null, info getNamespace()) toString() toUpper(), info getName())
+        if(parent) writer w("%s : static extern(%s) const %s\n" format(info getName(), cname, info getType() toString()))
+        else writer w("%s : extern(%s) const %s\n" format(info getName(), cname, info getType() toString()))
     }
 }

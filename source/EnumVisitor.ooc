@@ -1,16 +1,17 @@
 use gi
-import gi/[FunctionInfo, EnumInfo]
+import gi/[FunctionInfo, EnumInfo, Repository]
 import OocWriter, Visitor, FunctionVisitor, Utils
 import structs/ArrayList
 
-// Must make new version of libgirepository, wich requires newer version of Glib :/
+// In the generated GLib binding, the typename of enums are null. WHY?! (Only happens in GLib)
 EnumVisitor: class extends Visitor {
     info: EnumInfo
     init: func(=info)
 
     write: func(writer: OocWriter) {
         name := info getName() toString() escapeOocTypes()
-        writer w("%s: extern(%s) enum {\n\n" format(name, info getTypeName())) . indent()
+        // For some reason, the ctype of the enum is never populated and we cant directly get it as an attribute, so we fetch the prefix of the current namespace and prepend it to the name of the enum :D
+        writer w("%s: extern(%s%s) enum {\n\n" format(name, Repository getCPrefix(null, info getNamespace()), info getName())) . indent()
 
         // Write our values
         first := true
@@ -19,7 +20,7 @@ EnumVisitor: class extends Visitor {
             else writer uw(",\n")
 
             value := info getValue(i)
-            writer w("%s = %d" format(value getName() toString() toCamelCase(), value getValue()))
+            writer w("%s: extern(%s)" format(value getName() toString() toCamelCase() escapeOocTypes(), value getAttribute("c:identifier")))
             value unref()
         }
         writer uw('\n')

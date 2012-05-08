@@ -25,6 +25,7 @@ FunctionVisitor: class extends Visitor {
         writer w("%s: %sextern(%s) func" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol()))
         if(suffix) writer uw(" ~" + suffix)
 
+        // Write arguments
         first := true
         for(i in 0 .. info getNArgs()) {
             if(first) {
@@ -42,6 +43,10 @@ FunctionVisitor: class extends Visitor {
                 writer uw(type)
             }
             arg unref()
+        }
+        // If the function can throw an error, we need to add an Error* argument :)
+        if(info getFlags() & FunctionInfoFlags throws?) {
+            writer uw(", error : Error*")
         }
 
         if(!first) writer uw(")")

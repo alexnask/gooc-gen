@@ -1,6 +1,6 @@
 use gi
 import gi/[FunctionInfo, ObjectInfo, ArgInfo, InterfaceInfo, PropertyInfo, ConstantInfo]
-import OocWriter, Visitor, FunctionVisitor, PropertyVisitor, Utils
+import OocWriter, Visitor, FunctionVisitor, PropertyVisitor, ConstantVisitor, Utils
 import structs/ArrayList
 
 ObjectVisitor: class extends Visitor {
@@ -41,6 +41,7 @@ ObjectVisitor: class extends Visitor {
         // Write our constants
         for(i in 0 .. info getNConstants()) {
             constant := info getConstant(i)
+            ConstantVisitor new(constant, info) write(writer)
             constant unref()
         }
 

@@ -1,10 +1,10 @@
 use gtk, gi
 import io/File
-import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo]
+import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo, StructInfo]
 import gtk/Gtk
 import structs/ArrayList
 import text/StringTokenizer
-import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, InterfaceVisitor, ConstantVisitor
+import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, InterfaceVisitor, ConstantVisitor, StructVisitor
 
 Codegen: class {
     repo := Repository getDefault()
@@ -101,13 +101,14 @@ Codegen: class {
                 // Make a visitor depending on the type of the symbol
                 // Signals, callbacks, values, vfuncs, properties, fields, unions (?)
                 visitor := match(info getType()) {
-                    case InfoType function => FunctionVisitor new(info as FunctionInfo) as Visitor
-                    case InfoType _enum => EnumVisitor new(info as EnumInfo) as Visitor
-                    case InfoType flags => EnumVisitor new(info as EnumInfo) as Visitor
-                    case InfoType object => ObjectVisitor new(info as ObjectInfo) as Visitor
+                    case InfoType function   => FunctionVisitor new(info as FunctionInfo) as Visitor
+                    case InfoType _enum      => EnumVisitor new(info as EnumInfo) as Visitor
+                    case InfoType flags      => EnumVisitor new(info as EnumInfo) as Visitor
+                    case InfoType object     => ObjectVisitor new(info as ObjectInfo) as Visitor
                     case InfoType _interface => InterfaceVisitor new(info as InterfaceInfo) as Visitor
-                    case InfoType constant => ConstantVisitor new(info as ConstantInfo) as Visitor
-                    case => null as Visitor // We want to ignore generating symbols for some types of info, so we yield no error here
+                    case InfoType constant   => ConstantVisitor new(info as ConstantInfo) as Visitor
+                    case InfoType struct     => (!info as StructInfo isGTypeStruct?()) ? StructVisitor new(info as StructInfo) as Visitor : null
+                    case                     => null as Visitor // We want to ignore generating symbols for some types of info, so we yield no error here
                 }
                 if(visitor) visitor write(writer)
                 info unref()
@@ -130,3 +131,4 @@ Codegen: class {
         writer uw('\n')
     }
 }
+// TODO: fix weird bugs, RegisteredTypeInfo geTypeName sometimes returns null :-/
