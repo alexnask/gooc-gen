@@ -12,6 +12,7 @@ FunctionVisitor: class extends Visitor {
 
     write: func(writer: OocWriter) {
         name := info getName()
+        inStruct? := (parent && parent isStructInfo?())
         isStatic? := false
         isConstructor? := info getFlags() & FunctionInfoFlags isConstructor?
         suffix: String = null
@@ -22,8 +23,10 @@ FunctionVisitor: class extends Visitor {
             suffix = name toString()
             name = "new" toCString() // c"new"
         }
-        writer w("%s: %sextern(%s) func" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol()))
-        if(suffix) writer uw(" ~" + suffix)
+
+        // If the function is a structure members, this should be passed by reference
+        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol(), (inStruct?) ? "func@" : "func"))
+        if(suffix) writer uw("~" + suffix)
 
         // Write arguments
         first := true
@@ -36,6 +39,11 @@ FunctionVisitor: class extends Visitor {
 
             arg := info getArg(i)
             type := arg getType() toString()
+
+            if(parent && type == parent getName() toString() escapeOocTypes()) {
+                type = (inStruct?) ? "This*" : "This"
+            }
+
             argName := arg getName()
             if(argName) {
                 writer uw(argName toString() + " : " + type)
@@ -51,8 +59,10 @@ FunctionVisitor: class extends Visitor {
 
         if(!first) writer uw(")")
         returnType := info getReturnType()
-        if(isConstructor? && parent) {
+        if(isConstructor? && parent && !inStruct?) {
             writer uw(" -> This")
+        } else if(isConstructor? && inStruct?) {
+            writer uw(" -> This*")
         } else if(returnType && (str := returnType toString()) != "Void") {
             writer uw(" -> %s" format(str))
         }

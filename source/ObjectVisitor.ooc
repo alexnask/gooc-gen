@@ -44,6 +44,7 @@ ObjectVisitor: class extends Visitor {
             ConstantVisitor new(constant, info) write(writer)
             constant unref()
         }
+        // We dont really care about object fields, they should not haev any and if they have all access should be done through members anywyay
 
         writer uw('\n') . dedent() . w("}\n\n")
     }
