@@ -6,13 +6,15 @@ FunctionVisitor: class extends Visitor {
     info: FunctionInfo
     // Parent type (declaration)
     parent: RegisteredTypeInfo
+    byValue? := false
 
     init: func(=info)
-    init: func~tihParent(=info, =parent)
+    init: func~withParent(=info, =parent)
+    init: func~withByValue(=info, =parent, =byValue?)
 
     write: func(writer: OocWriter) {
         name := info getName()
-        inStruct? := (parent && parent isStructInfo?())
+        inValueStruct? := (parent && byValue?)
         isStatic? := false
         isConstructor? := info getFlags() & FunctionInfoFlags isConstructor?
         suffix: String = null
@@ -25,7 +27,7 @@ FunctionVisitor: class extends Visitor {
         }
 
         // If the function is a structure members, this should be passed by reference
-        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol(), (inStruct?) ? "func@" : "func"))
+        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
         if(suffix) writer uw("~" + suffix)
 
         // Write arguments
@@ -33,33 +35,33 @@ FunctionVisitor: class extends Visitor {
         // The previous type we wrote
         prevType := ""
         for(i in 0 .. info getNArgs()) {
+            last? := i == info getNArgs() - 1
             arg := info getArg(i)
             type := arg getType() toString()
 
+            if(parent && type == parent getName() toString() escapeOocTypes()) {
+                type = (inValueStruct?) ? "This*" : "This"
+            }
+
             if(first) {
-                first = false
                 prevType = type
                 writer uw("(")
             }
-            else writer uw(", ")
-
-            if(parent && type == parent getName() toString() escapeOocTypes()) {
-                type = (inStruct?) ? "This*" : "This"
-            }
-
             // If the type of the arguments hasn't changed and we arent on the last argument we can jus write the name of the argument, else we write its name and type
             argName := arg getName()
-            if(type != prevType || !argName || i == info getNArgs() - 1) {
-                prevType = type
-                if(argName) {
-                    writer uw("%s : %s" format(argName, type))
-                } else {
-                    writer uw(type)
-                }
+            if(first) {
+                first = false
+                if(last?) writer uw("%s : %s" format(argName, type))
+                else writer uw(argName toString())
+            } else if(type != prevType) {
+                if(last?) writer uw(" : %s, %s : %s" format(prevType, argName, type))
+                else writer uw(" : %s, %s" format(prevType, argName))
+            } else if(last?) {
+                writer uw(", %s : %s" format(argName, type))
             } else {
-                writer uw(argName toString())
+                writer uw(", %s" format(argName toString()))
             }
-
+            prevType = type
             arg unref()
         }
         // If the function can throw an error, we need to add an Error* argument :)
@@ -67,14 +69,15 @@ FunctionVisitor: class extends Visitor {
             writer uw(", error : Error*")
         }
 
-        if(!first) writer uw(")")
+        if(!first) writer uw(") ")
         returnType := info getReturnType()
-        if(isConstructor? && parent && !inStruct?) {
-            writer uw(" -> This")
-        } else if(isConstructor? && inStruct?) {
-            writer uw(" -> This*")
+        if(isConstructor? && parent && !inValueStruct?) {
+            writer uw("-> This")
+        } else if(isConstructor? && inValueStruct?) {
+            writer uw("-> This*")
         } else if(returnType && (str := returnType toString()) != "Void") {
-            writer uw(" -> %s" format(str))
+            if(parent && str == parent getName() toString() escapeOocTypes()) str = (inValueStruct?) ? "This*" : "This"
+            writer uw("-> %s" format(str))
         }
         writer uw("\n")
     }

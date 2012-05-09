@@ -1,16 +1,17 @@
 use gi
-import gi/[TypeInfo, RegisteredTypeInfo, BaseInfo]
+import gi/[TypeInfo, RegisteredTypeInfo, BaseInfo, StructInfo]
 import structs/ArrayList
 import text/StringTokenizer
 
-extend TypeTag {
+extend TypeInfo {
     // Returns true if this type must be pointerized if its type info is marked as a pointer ;)
     needsPointerization?: func -> Bool {
-        isBasic?() && (this != TypeTag gtype && this != TypeTag utf8 && this != TypeTag filename)
+        tag := getTag()
+        // Types that need pointerization are primitives and by value structures
+        if(tag == TypeTag _interface && (_struct := getInterface()) isStructInfo?() && _struct as StructInfo getNFields() != 0) return true
+        tag isBasic?() && (tag != TypeTag gtype && tag != TypeTag utf8 && tag != TypeTag filename)
     }
-}
 
-extend TypeInfo {
     toString: func -> String {
         base := match(getTag()) {
             case TypeTag void       => "Void"
@@ -42,7 +43,7 @@ extend TypeInfo {
                     case ArrayType c         =>  "%s*" format(getParamType(0) toString())
                 }
         }
-        (this isPointer?() && getTag() needsPointerization?()) ? "%s*" format(base) : base
+        (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
     }
 }
 
