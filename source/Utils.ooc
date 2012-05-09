@@ -43,6 +43,9 @@ extend TypeInfo {
                     case ArrayType c         =>  "%s*" format(getParamType(0) toString())
                 }
         }
+
+        if(base == "_Object" && getInterface() as RegisteredTypeInfo getTypeName() toString() == "AtkObject") base = "_AtkObject"
+
         (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
     }
 }
