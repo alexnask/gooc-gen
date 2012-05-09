@@ -10,7 +10,7 @@ StructVisitor: class extends Visitor {
         name := info getName() toString() escapeOocTypes()
         byValue? := info getNFields() != 0
         // For some reason the ctype of the StructInfo is never populated and we cannot access it directly through an attribute, so we just find the prefix of the namespace and prepend it to sthe structure name
-        writer w("%s: cover from %s%s {\n\n" format(name, Repository getCPrefix(null, info getNamespace()), info getName())) . indent()
+        writer w("%s: cover from %s%s%s {\n\n" format(name, Repository getCPrefix(null, info getNamespace()), info getName(), (byValue?) ? "" : "*")) . indent()
 
         // Write methods
         for(i in 0 .. info getNMethods()) {
