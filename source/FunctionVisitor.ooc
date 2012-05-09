@@ -30,26 +30,36 @@ FunctionVisitor: class extends Visitor {
 
         // Write arguments
         first := true
+        // The previous type we wrote
+        prevType := ""
         for(i in 0 .. info getNArgs()) {
+            arg := info getArg(i)
+            type := arg getType() toString()
+
             if(first) {
                 first = false
+                prevType = type
                 writer uw("(")
             }
             else writer uw(", ")
-
-            arg := info getArg(i)
-            type := arg getType() toString()
 
             if(parent && type == parent getName() toString() escapeOocTypes()) {
                 type = (inStruct?) ? "This*" : "This"
             }
 
+            // If the type of the arguments hasn't changed and we arent on the last argument we can jus write the name of the argument, else we write its name and type
             argName := arg getName()
-            if(argName) {
-                writer uw(argName toString() + " : " + type)
+            if(type != prevType || !argName || i == info getNArgs() - 1) {
+                prevType = type
+                if(argName) {
+                    writer uw("%s : %s" format(argName, type))
+                } else {
+                    writer uw(type)
+                }
             } else {
-                writer uw(type)
+                writer uw(argName toString())
             }
+
             arg unref()
         }
         // If the function can throw an error, we need to add an Error* argument :)
