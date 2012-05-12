@@ -2,6 +2,8 @@ use gi
 import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo, ArgInfo]
 import OocWriter, Visitor, Utils
 
+// Handle arguments of callback types (make them pointer, generate a second function that takes a closure and passes the context as a userData pointer if the function has one and the callback type has a last argument of pointer type)
+
 FunctionVisitor: class extends Visitor {
     info: FunctionInfo
     // Parent type (declaration)

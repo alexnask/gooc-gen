@@ -10,13 +10,10 @@ ObjectVisitor: class extends Visitor {
     write: func(writer: OocWriter) {
         name := info getName() toString() escapeOocTypes()
 
-        if(info getTypeName() toString() == "AtkObject") name = "_AtkObject"
-
-        writer w("%s: cover from %s*" format(name, info getTypeName()))
+        writer w("%s: cover from %s*" format(name, info cType()))
         parent := info getParent()
         if(parent) {
             parentName := parent getName() toString() escapeOocTypes()
-            if(parent getTypeName() toString() == "AtkObject") parentName = "_AtkObject"
             writer uw(" extends %s" format(parentName))
         }
         parent unref()

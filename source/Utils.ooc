@@ -1,7 +1,13 @@
 use gi
-import gi/[TypeInfo, RegisteredTypeInfo, BaseInfo, StructInfo]
+import gi/[Repository, TypeInfo, RegisteredTypeInfo, BaseInfo, StructInfo]
 import structs/ArrayList
 import text/StringTokenizer
+
+extend RegisteredTypeInfo {
+    cType: func -> String {
+        "%s%s" format(Repository getCPrefix(null, getNamespace()), getName())
+    }
+}
 
 extend TypeInfo {
     // Returns true if this type must be pointerized if its type info is marked as a pointer ;)

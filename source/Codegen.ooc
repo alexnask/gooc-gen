@@ -99,7 +99,7 @@ Codegen: class {
                 name := info getName() toString()
                 if(verbose?) "Writing symbol %s of type %s" format(name, info getType() toString()) println()
                 // Make a visitor depending on the type of the symbol
-                // Signals, callbacks, values, vfuncs, properties, fields, unions (?)
+                // Signals, CALLBACKS, values, vfuncs, properties, fields, unions (?)
                 visitor := match(info getType()) {
                     case InfoType function   => FunctionVisitor new(info as FunctionInfo) as Visitor
                     case InfoType _enum      => EnumVisitor new(info as EnumInfo) as Visitor
