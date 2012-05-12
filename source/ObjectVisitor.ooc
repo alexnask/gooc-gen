@@ -8,13 +8,13 @@ ObjectVisitor: class extends Visitor {
     init: func(=info)
 
     write: func(writer: OocWriter) {
-        name := info getName() toString() escapeOocTypes()
+        namespace := info getNamespace() toString()
+        name := info oocType(namespace)
 
         writer w("%s: cover from %s*" format(name, info cType()))
         parent := info getParent()
         if(parent) {
-            parentName := parent getName() toString() escapeOocTypes()
-            writer uw(" extends %s" format(parentName))
+            writer uw(" extends %s" format(parent oocType(namespace)))
         }
         parent unref()
 
@@ -26,7 +26,7 @@ ObjectVisitor: class extends Visitor {
                 if(first) first = false
                 else writer uw(", ")
                 inter := info getInterface(i)
-                writer uw(inter getName() toString())
+                writer uw(inter oocType(namespace))
                 inter unref()
             }
         }

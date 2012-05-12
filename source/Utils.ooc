@@ -1,11 +1,30 @@
 use gi
-import gi/[Repository, TypeInfo, RegisteredTypeInfo, BaseInfo, StructInfo]
+import gi/[Repository, TypeInfo, RegisteredTypeInfo, BaseInfo, StructInfo, ArgInfo]
 import structs/ArrayList
 import text/StringTokenizer
 
 extend RegisteredTypeInfo {
     cType: func -> String {
         "%s%s" format(Repository getCPrefix(null, getNamespace()), getName())
+    }
+
+    oocType: func(namespace: String, parent: This = null, byValue?: Bool = false) -> String {
+        name := getName() toString()
+        name = (getNamespace() toString() == namespace) ? name : "(%s %s)" format(getNamespace(), name)
+        if(parent && parent getName() toString() escapeOocTypes() == name) {
+            name = (byValue?) ? "This*" : "This"
+        }
+        name
+    }
+}
+
+extend ArgInfo {
+    // Returns the ooc type based on the current namespace
+    oocType: func(namespace: String, parent: RegisteredTypeInfo = null, byValue?: Bool = false) -> String {
+        type := getType() toString()
+        iface := getType() getInterface() as RegisteredTypeInfo
+        if(iface) type = iface oocType(namespace, parent, byValue?)
+        type
     }
 }
 
@@ -49,8 +68,6 @@ extend TypeInfo {
                     case ArrayType c         =>  "%s*" format(getParamType(0) toString())
                 }
         }
-
-        if(base == "_Object" && getInterface() as RegisteredTypeInfo getTypeName() toString() == "AtkObject") base = "_AtkObject"
 
         (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
     }

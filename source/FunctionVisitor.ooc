@@ -15,8 +15,9 @@ FunctionVisitor: class extends Visitor {
     init: func~withByValue(=info, =parent, =byValue?)
 
     write: func(writer: OocWriter) {
+        namespace := info getNamespace() toString()
         name := info getName()
-        inValueStruct? := (parent && byValue?)
+        inValueStruct? := (parent != null && byValue?)
         isStatic? := false
         isConstructor? := info getFlags() & FunctionInfoFlags isConstructor?
         suffix: String = null
@@ -39,11 +40,7 @@ FunctionVisitor: class extends Visitor {
         for(i in 0 .. info getNArgs()) {
             last? := i == info getNArgs() - 1
             arg := info getArg(i)
-            type := arg getType() toString()
-
-            if(parent && type == parent getName() toString() escapeOocTypes()) {
-                type = (inValueStruct?) ? "This*" : "This"
-            }
+            type := arg oocType(namespace, parent, inValueStruct?)
 
             if(first) {
                 prevType = type
@@ -73,14 +70,9 @@ FunctionVisitor: class extends Visitor {
 
         if(!first) writer uw(") ")
         returnType := info getReturnType()
-        if(isConstructor? && parent && !inValueStruct?) {
-            writer uw("-> This")
-        } else if(isConstructor? && inValueStruct?) {
-            writer uw("-> This*")
-        } else if(returnType && (str := returnType toString()) != "Void") {
-            if(parent && str == parent getName() toString() escapeOocTypes()) str = (inValueStruct?) ? "This*" : "This"
-            writer uw("-> %s" format(str))
-        }
+        iface := returnType getInterface() as RegisteredTypeInfo
+        if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
+        else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString()))
         writer uw("\n")
     }
 }

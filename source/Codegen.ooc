@@ -124,7 +124,8 @@ Codegen: class {
         if(dependencies) {
             i := 0
             while(dependencies[i]) {
-                writer uw("import %s\n" format(dependencies[i] toString() split('-')[0]))
+                ns := dependencies[i] toString() split('-')[0]
+                writer uw("import %s into %s\n" format(ns, ns))
                 i += 1
             }
         }
