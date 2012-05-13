@@ -69,7 +69,8 @@ extend TypeInfo {
                 }
         }
 
-        (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
+        base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
+        (base == "Void*") ? "Pointer" : base
     }
 }
 

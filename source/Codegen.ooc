@@ -1,10 +1,10 @@
 use gtk, gi
 import io/File
-import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo, StructInfo]
+import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo, StructInfo, CallbackInfo]
 import gtk/Gtk
 import structs/ArrayList
 import text/StringTokenizer
-import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, InterfaceVisitor, ConstantVisitor, StructVisitor
+import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, InterfaceVisitor, ConstantVisitor, StructVisitor, CallbackVisitor
 
 Codegen: class {
     repo := Repository getDefault()
@@ -108,6 +108,7 @@ Codegen: class {
                     case InfoType _interface => InterfaceVisitor new(info as InterfaceInfo) as Visitor
                     case InfoType constant   => ConstantVisitor new(info as ConstantInfo) as Visitor
                     case InfoType struct     => (!info as StructInfo isGTypeStruct?()) ? StructVisitor new(info as StructInfo) as Visitor : null
+                    case InfoType callback   => CallbackVisitor new(info as CallbackInfo) as Visitor
                     case                     => null as Visitor // We want to ignore generating symbols for some types of info, so we yield no error here
                 }
                 if(visitor) visitor write(writer)
