@@ -26,7 +26,7 @@ EnumVisitor: class extends Visitor {
         // Write our methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-            FunctionVisitor new(method, info) write(writer)
+            FunctionVisitor new(method, info) write(writer) . free()
             method unref()
         }
 

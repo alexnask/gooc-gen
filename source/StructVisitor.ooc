@@ -26,7 +26,7 @@ StructVisitor: class extends Visitor {
         // Write methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-            FunctionVisitor new(method, info, byValue?) write(writer)
+            FunctionVisitor new(method, info, byValue?) write(writer) . free()
             method unref()
         }
         writer dedent() . uw("\n\n}\n\n")

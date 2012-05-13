@@ -36,13 +36,13 @@ ObjectVisitor: class extends Visitor {
         // Write our methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-            FunctionVisitor new(method, info) write(writer)
+            FunctionVisitor new(method, info) write(writer) . free()
             method unref()
         }
         // Write our constants
         for(i in 0 .. info getNConstants()) {
             constant := info getConstant(i)
-            ConstantVisitor new(constant, info) write(writer)
+            ConstantVisitor new(constant, info) write(writer) . free()
             constant unref()
         }
         // We dont really care about object fields, they should not haev any and if they have all access should be done through members anywyay
