@@ -9,12 +9,12 @@ extend RegisteredTypeInfo {
     }
 
     oocType: func(namespace: String, parent: This = null, byValue?: Bool = false) -> String {
-        name := getName() toString() escapeOocTypes()
+        name := getName() toString() escapeOoc()
         name = (getNamespace() toString() == namespace) ? name : "(%s %s)" format(getNamespace(), name)
-        if(parent && parent getName() toString() escapeOocTypes() == name) {
+        if(parent && parent getName() toString() escapeOoc() == name) {
             name = (byValue?) ? "This*" : "This"
         }
-        name escapeOocTypes()
+        name escapeOoc()
     }
 }
 
@@ -38,6 +38,7 @@ extend TypeInfo {
     }
 
     toString: func -> String {
+        // TODO: Array types errors etc should be namespaced
         base := match(getTag()) {
             case TypeTag void       => "Void"
             case TypeTag boolean    => "Bool"
@@ -59,7 +60,7 @@ extend TypeInfo {
             case TypeTag ghash      => "Hash"
             case TypeTag error      => "Error"
             case TypeTag unichar    => "UInt"
-            case TypeTag _interface => getInterface() as RegisteredTypeInfo getName() toString() escapeOocTypes()
+            case TypeTag _interface => getInterface() as RegisteredTypeInfo getName() toString() escapeOoc()
             case TypeTag array      =>
                 match(getArrayType()) {
                     case ArrayType array     => "Array"
@@ -70,21 +71,28 @@ extend TypeInfo {
         }
 
         base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
-        (base == "Void*") ? "Pointer" : base escapeOocTypes()
+        (base == "Void*") ? "Pointer" : base
     }
 }
 
 extend String {
-    escapeOocTypes: func -> This {
+    escapeOoc: func -> This {
         match(this) {
-            case "Object"  => "_Object"
-            case "Closure" => "_Closure"
-            case "match"   => "_match"
-            case "case"    => "_case"
-            case "if"      => "_if"
-            case "while"   => "_while"
-            case "for"     => "_for"
-            case           => this
+            case "Object"   => "_Object"
+            case "Closure"  => "_Closure"
+            case "match"    => "_match"
+            case "case"     => "_case"
+            case "if"       => "_if"
+            case "while"    => "_while"
+            case "for"      => "_for"
+            case "func"     => "_func"
+            case "include"  => "_include"
+            case "import"   => "_import"
+            case "break"    => "_break"
+            case "continue" => "_continue"
+            case "try"      => "_try"
+            case "catch"    => "_catch"
+            case            => this
         }
     }
 

@@ -1,6 +1,6 @@
 use gi
-import gi/[RegisteredTypeInfo, TypeInfo, FieldInfo, Repository]
-import OocWriter, Visitor, Utils
+import gi/[RegisteredTypeInfo, TypeInfo, FieldInfo, CallbackInfo, Repository]
+import OocWriter, Visitor, CallbackVisitor, Utils
 
 FieldVisitor: class extends Visitor {
     info: FieldInfo
@@ -13,7 +13,14 @@ FieldVisitor: class extends Visitor {
         cname := info getName()
         type := info getType()
         typeStr := type toString()
-        if(iface := type getInterface()) typeStr = iface as RegisteredTypeInfo oocType(namespace, parent, byValue?)
-        writer w("%s: extern(%s) %s\n" format(cname toString() toCamelCase(), cname, typeStr))
+        if(iface := type getInterface()) {
+            typeStr = iface as RegisteredTypeInfo oocType(namespace, parent, byValue?)
+            if(CallbackVisitor callback(iface getName() toString())) {
+                typeStr = "Pointer"
+            } else if(iface isCallableInfo?()) {
+                typeStr = "Pointer"
+            }
+        }
+        writer w("%s: extern(%s) %s\n" format(cname toString() toCamelCase() escapeOoc(), cname, typeStr))
     }
 }

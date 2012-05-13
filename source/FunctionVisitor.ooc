@@ -32,7 +32,7 @@ FunctionVisitor: class extends Visitor {
         }
 
         // If the function is a structure members, this should be passed by reference
-        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
+        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase() escapeOoc(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
         if(suffix) writer uw("~" + suffix)
 
         // Write arguments
@@ -64,25 +64,26 @@ FunctionVisitor: class extends Visitor {
                 writer uw("(")
             }
             // If the type of the arguments hasn't changed and we arent on the last argument we can jus write the name of the argument, else we write its name and type
-            argName := arg getName()
+            argName := arg getName() toString() escapeOoc()
             if(first) {
                 first = false
                 if(last?) writer uw("%s : %s" format(argName, type))
-                else writer uw(argName toString())
+                else writer uw(argName)
             } else if(type != prevType) {
                 if(last?) writer uw(" : %s, %s : %s" format(prevType, argName, type))
                 else writer uw(" : %s, %s" format(prevType, argName))
             } else if(last?) {
                 writer uw(", %s : %s" format(argName, type))
             } else {
-                writer uw(", %s" format(argName toString()))
+                writer uw(", %s" format(argName))
             }
             prevType = type
             arg unref()
         }
         // If the function can throw an error, we need to add an Error* argument :)
         if(info getFlags() & FunctionInfoFlags throws?) {
-            writer uw(", error : Error*")
+            if(!first) writer uw(", error : Error*") // TODO: namespace error
+            else writer uw("(error : Error*)")
         }
 
         if(!first) writer uw(") ")
@@ -95,7 +96,7 @@ FunctionVisitor: class extends Visitor {
         // TODO: Code from here on is terrible, far too much repetition
         if(rewriteClosureVersion?) {
             arg := info getArg(closureIndex)
-            closureName := arg getName()
+            closureName := arg getName() toString() escapeOoc()
             arg unref()
 
             writer w("%s: %s %s ~closure (" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", (inValueStruct?) ? "func@" : "func"))
@@ -103,7 +104,7 @@ FunctionVisitor: class extends Visitor {
             for(i in 0 .. info getNArgs()) {
                 last? := (i == info getNArgs() - 1) || ((closureIndex == info getNArgs() - 2) && (i == info getNArgs() - 2))
                 arg := info getArg(i)
-                argName := arg getName()
+                argName := arg getName() toString() escapeOoc()
 
                 type := arg oocType(namespace, parent, inValueStruct?)
                 if(first) {
@@ -117,7 +118,7 @@ FunctionVisitor: class extends Visitor {
                     closureStr := "%s : %s" format(closureName, callback toOocString(namespace, parent, byValue?))
 
                     if(first && last?) writer uw(closureStr)
-                    else if(first) writer uw(argName toString())
+                    else if(first) writer uw(argName)
                     else if(last?) writer uw(" : %s, %s" format(prevType, closureStr))
                     else writer uw(" : %s, %s" format(prevType, argName))
 
@@ -127,14 +128,14 @@ FunctionVisitor: class extends Visitor {
                     // If the type of the arguments hasn't changed and we arent on the last argument we can jus write the name of the argument, else we write its name and type
                     if(first) {
                         if(last?) writer uw("%s : %s" format(argName, type))
-                        else writer uw(argName toString())
+                        else writer uw(argName)
                     } else if(type != prevType) {
                         if(last?) writer uw(" : %s, %s : %s" format(prevType, argName, type))
                         else writer uw(" : %s, %s" format(prevType, argName))
                     } else if(last?) {
                         writer uw(", %s : %s" format(argName, type))
                     } else {
-                        writer uw(", %s" format(argName toString()))
+                        writer uw(", %s" format(argName))
                     }
                     prevType = type
                     if(first) first = false
@@ -143,7 +144,8 @@ FunctionVisitor: class extends Visitor {
             }
             // If the function can throw an error, we need to add an Error* argument :)
             if(info getFlags() & FunctionInfoFlags throws?) {
-                writer uw(", error : Error*")
+                if(!first) writer uw(", error : Error*") // TODO: should be namespaced if necessary
+                else writer uw("(error : Error*")
             }
             writer uw(") {\n") . indent()
             writer w("%s(" format(name toString() toCamelCase()))
@@ -158,7 +160,7 @@ FunctionVisitor: class extends Visitor {
                     writer uw("%s as Closure context" format(closureName))
                 } else {
                     arg := info getArg(i)
-                    writer uw(arg getName() toString())
+                    writer uw(arg getName() toString() escapeOoc())
                     arg unref()
                 }
             }

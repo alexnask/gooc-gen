@@ -7,7 +7,7 @@ StructVisitor: class extends Visitor {
     init: func(=info)
 
     write: func(writer: OocWriter) {
-        name := info getName() toString() escapeOocTypes()
+        name := info getName() toString() escapeOoc()
         byValue? := (info getNFields() != 0)
 
         // If the structure only has dummy fields, it must be covered by reference
