@@ -1,6 +1,6 @@
 use gi
 import gi/[StructInfo, FunctionInfo, FieldInfo, Repository]
-import OocWriter, Visitor, FunctionVisitor, Utils
+import OocWriter, Visitor, FunctionVisitor, FieldVisitor, Utils
 
 StructVisitor: class extends Visitor {
     info: StructInfo
@@ -22,6 +22,16 @@ StructVisitor: class extends Visitor {
         }
         // For some reason the ctype of the StructInfo is never populated and we cannot access it directly through an attribute, so we just find the prefix of the namespace and prepend it to sthe structure name
         writer w("%s: cover from %s%s {\n\n" format(name, info cType(), (byValue?) ? "" : "*")) . indent()
+
+        // Write fields
+        if(byValue?) {
+            for(i in 0 .. info getNFields()) {
+                field := info getField(i)
+                FieldVisitor new(field, info, byValue?) write(writer) . free()
+                field unref()
+            }
+            writer uw('\n')
+        }
 
         // Write methods
         for(i in 0 .. info getNMethods()) {

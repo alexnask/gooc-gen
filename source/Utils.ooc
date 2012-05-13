@@ -9,12 +9,12 @@ extend RegisteredTypeInfo {
     }
 
     oocType: func(namespace: String, parent: This = null, byValue?: Bool = false) -> String {
-        name := getName() toString()
+        name := getName() toString() escapeOocTypes()
         name = (getNamespace() toString() == namespace) ? name : "(%s %s)" format(getNamespace(), name)
         if(parent && parent getName() toString() escapeOocTypes() == name) {
             name = (byValue?) ? "This*" : "This"
         }
-        name
+        name escapeOocTypes()
     }
 }
 
@@ -70,7 +70,7 @@ extend TypeInfo {
         }
 
         base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
-        (base == "Void*") ? "Pointer" : base
+        (base == "Void*") ? "Pointer" : base escapeOocTypes()
     }
 }
 
