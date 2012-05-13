@@ -9,10 +9,12 @@ FunctionVisitor: class extends Visitor {
     // Parent type (declaration)
     parent: RegisteredTypeInfo
     byValue? := false
+    forcedSuffix: String = null
 
     init: func(=info)
     init: func~withParent(=info, =parent)
     init: func~withByValue(=info, =parent, =byValue?)
+    init: func~withSuffix(=info, =parent, =forcedSuffix)
 
     write: func(writer: OocWriter) {
         namespace := info getNamespace() toString()
@@ -34,6 +36,7 @@ FunctionVisitor: class extends Visitor {
         // If the function is a structure members, this should be passed by reference
         writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase() escapeOoc(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
         if(suffix) writer uw("~" + suffix)
+        else if(forcedSuffix) writer uw("~" + forcedSuffix)
 
         // Write arguments
         first := true
@@ -99,7 +102,7 @@ FunctionVisitor: class extends Visitor {
             closureName := arg getName() toString() escapeOoc()
             arg unref()
 
-            writer w("%s: %s %s ~closure (" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", (inValueStruct?) ? "func@" : "func"))
+            writer w("%s: %s %s ~%sclosure (" format(name toString() toCamelCase(), (isStatic?) ? "static " : "", (inValueStruct?) ? "func@" : "func", (forcedSuffix) ? forcedSuffix : ""))
             first := true
             for(i in 0 .. info getNArgs()) {
                 last? := (i == info getNArgs() - 1) || ((closureIndex == info getNArgs() - 2) && (i == info getNArgs() - 2))

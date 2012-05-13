@@ -4,7 +4,7 @@ import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceIn
 import gtk/Gtk
 import structs/ArrayList
 import text/StringTokenizer
-import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, InterfaceVisitor, ConstantVisitor, StructVisitor, CallbackVisitor
+import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, ConstantVisitor, StructVisitor, CallbackVisitor
 
 Codegen: class {
     repo := Repository getDefault()
@@ -105,7 +105,6 @@ Codegen: class {
                     case InfoType _enum      => EnumVisitor new(info as EnumInfo) as Visitor
                     case InfoType flags      => EnumVisitor new(info as EnumInfo) as Visitor
                     case InfoType object     => ObjectVisitor new(info as ObjectInfo) as Visitor
-                    case InfoType _interface => InterfaceVisitor new(info as InterfaceInfo) as Visitor
                     case InfoType constant   => ConstantVisitor new(info as ConstantInfo) as Visitor
                     case InfoType struct     => (!info as StructInfo isGTypeStruct?()) ? StructVisitor new(info as StructInfo) as Visitor : null
                     case InfoType callback   => CallbackVisitor new(info as CallbackInfo) as Visitor

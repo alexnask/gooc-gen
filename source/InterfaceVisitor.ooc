@@ -1,36 +1,37 @@
 use gi
+import structs/ArrayList
 import gi/InterfaceInfo
 import OocWriter, FunctionVisitor, ConstantVisitor, Visitor, Utils
 
 InterfaceVisitor: class extends Visitor {
+    written := static ArrayList<String> new() // Interfaces we have already written! The ObjectInfo should take care of clearing this list 
+
+    namespace: String
     info: InterfaceInfo
-    init: func(=info)
+    init: func(=info, =namespace)
 
     write: func(writer: OocWriter) {
-        namespace := info getNamespace() toString()
         name := info oocType(namespace)
 
-        writer w("%s: extern(%s) interface " format(name, info cType()))
+        This written add(name)
+        writer w("// Namespace %s from C namespace %s\n" format(name, info cType()))
 
         nInter := info getNPrerequisites()
         if(nInter > 0) {
-            writer uw(" implements ")
-            first := true
-            for(i in 0 .. nInter) {
-                if(first) first = false
-                else writer uw(", ")
+            for(i in 0..nInter) {
                 inter := info getPrerequisite(i)
-                writer uw(inter as InterfaceInfo oocType(namespace))
+                name := inter as InterfaceInfo oocType(namespace)
+                if(This written indexOf(name) < 0) {
+                    if(inter isInterfaceInfo?()) This new(inter as InterfaceInfo, namespace) write(writer) . free()
+                }
                 inter unref()
             }
         }
 
-        writer uw(" {\n\n") . indent()
-
         // Write our methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-            FunctionVisitor new(method, info) write(writer) . free()
+            FunctionVisitor new(method, info, info getName() toString()) write(writer) . free()
             method unref()
         }
         // Write our constants
@@ -39,7 +40,7 @@ InterfaceVisitor: class extends Visitor {
             ConstantVisitor new(constant, info) write(writer) . free()
             constant unref()
         }
-
-        writer uw('\n') . dedent() . w("}\n\n")
+        writer w("// End of namespace %s\n\n" format(name))
     }
 }
+
