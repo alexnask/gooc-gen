@@ -10,6 +10,10 @@ extend RegisteredTypeInfo {
 
     oocType: func(namespace: String, parent: This = null, byValue?: Bool = false) -> String {
         name := getName() toString() escapeOoc()
+
+        // Temporary fix while #390 is still relevant
+        if(name endsWith?("Class")) name = name append("_")
+
         name = (getNamespace() toString() == namespace) ? name : "(%s %s)" format(getNamespace(), name)
         if(parent && parent getName() toString() escapeOoc() == name) {
             name = (byValue?) ? "This*" : "This"
@@ -78,21 +82,32 @@ extend TypeInfo {
 extend String {
     escapeOoc: func -> This {
         match(this) {
-            case "Object"   => "_Object"
-            case "Closure"  => "_Closure"
-            case "match"    => "_match"
-            case "case"     => "_case"
-            case "if"       => "_if"
-            case "while"    => "_while"
-            case "for"      => "_for"
-            case "func"     => "_func"
-            case "include"  => "_include"
-            case "import"   => "_import"
-            case "break"    => "_break"
-            case "continue" => "_continue"
-            case "try"      => "_try"
-            case "catch"    => "_catch"
-            case            => this
+            case "Object"    => "_Object"
+            case "Closure"   => "_Closure"
+            case "match"     => "_match"
+            case "case"      => "_case"
+            case "if"        => "_if"
+            case "while"     => "_while"
+            case "for"       => "_for"
+            case "func"      => "_func"
+            case "include"   => "_include"
+            case "import"    => "_import"
+            case "break"     => "_break"
+            case "continue"  => "_continue"
+            case "try"       => "_try"
+            case "catch"     => "_catch"
+            case "abstract"  => "_abstract"
+            case "final"     => "_final"
+            case "extern"    => "_extern"
+            case "static"    => "_static"
+            case "unmangled" => "_unmangled"
+            case "const"     => "_const"
+            case "enum"      => "_enum"
+            case "class"     => "_class"
+            case "cover"     => "_cover"
+            case "inline"    => "_inline"
+            case "null"      => "_null"
+            case             => (this[0] digit?()) ? this prepend('_') : this
         }
     }
 

@@ -8,7 +8,8 @@ EnumVisitor: class extends Visitor {
     init: func(=info)
 
     write: func(writer: OocWriter) {
-        name := info getName() toString() escapeOoc()
+        namespace := info getNamespace() toString()
+        name := info oocType(namespace)
         // For some reason, the ctype of the enum is never populated and we cant directly get it as an attribute, so we fetch the prefix of the current namespace and prepend it to the name of the enum :D
         writer w("%s: extern(%s) enum {\n\n" format(name, info cType())) . indent()
 
