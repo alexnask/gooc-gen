@@ -35,7 +35,7 @@ Callback: class {
         returnType := info getReturnType()
         iface := returnType getInterface() as RegisteredTypeInfo
         if(iface) return "Func(%s) -> %s" format(types, iface oocType(namespace, parent, byValue?))
-        else if(returnType toString() != "Void") return "Func(%s) -> %s" format(types, returnType toString())
+        else if(returnType toString() != "Void") return "Func(%s) -> %s" format(types, returnType toString(namespace))
 
         "Func(%s)" format(types)
     }

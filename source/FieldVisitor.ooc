@@ -12,12 +12,10 @@ FieldVisitor: class extends Visitor {
         namespace := parent getNamespace() toString()
         cname := info getName()
         type := info getType()
-        typeStr := type toString()
+        typeStr := type toString(namespace)
         if(iface := type getInterface()) {
             typeStr = iface as RegisteredTypeInfo oocType(namespace, parent, byValue?)
-            if(CallbackVisitor callback(iface getName() toString())) {
-                typeStr = "Pointer"
-            } else if(iface isCallableInfo?()) {
+            if(iface isCallableInfo?()) {
                 typeStr = "Pointer"
             }
         }

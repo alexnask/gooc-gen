@@ -11,7 +11,7 @@ ConstantVisitor: class extends Visitor {
     write: func(writer: OocWriter) {
         namespace := (parent != null) ? parent getNamespace() toString() : ""
         type := info getType()
-        typeStr := type toString()
+        typeStr := type toString(namespace)
         if(iface := type getInterface()) {
             typeStr = iface as RegisteredTypeInfo oocType(namespace, parent)
             if(CallbackVisitor callback(iface getName() toString())) {

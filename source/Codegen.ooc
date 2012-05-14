@@ -1,10 +1,10 @@
 use gtk, gi
 import io/File
-import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo, StructInfo, CallbackInfo]
+import gi/[Repository, BaseInfo, FunctionInfo, EnumInfo, ObjectInfo, InterfaceInfo, ConstantInfo, StructInfo, InterfaceInfo, CallbackInfo]
 import gtk/Gtk
 import structs/ArrayList
 import text/StringTokenizer
-import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, ConstantVisitor, StructVisitor, CallbackVisitor
+import OocWriter, Visitor, FunctionVisitor, EnumVisitor, ObjectVisitor, ConstantVisitor, StructVisitor, CallbackVisitor, InterfaceVisitor
 
 Codegen: class {
     repo := Repository getDefault()
@@ -80,7 +80,19 @@ Codegen: class {
     }
 
     generate: func {
-        // And then go through our namespace symbols and generate them
+        // Pass 1: Store callback info
+        namespaces each(|nameVer|
+            ns := nameVer split('-')[0]
+            for(index in 0 .. repo getNInfos(ns)) {
+                info := repo getInfo(ns, index)
+                if(info getType() == InfoType callback) {
+                    CallbackVisitor new(info as CallbackInfo) write(null) . free()
+                }
+                info unref()
+            }
+        )
+
+        // Pass 2: Write stuff
         namespaces each(|nameVer|
             ns := nameVer split('-')[0]
 
@@ -99,7 +111,6 @@ Codegen: class {
                 name := info getName() toString()
                 if(verbose?) "Writing symbol %s of type %s" format(name, info getType() toString()) println()
                 // Make a visitor depending on the type of the symbol
-                // Signals, CALLBACKS, values, vfuncs, properties, fields, unions (?)
                 visitor := match(info getType()) {
                     case InfoType function   => FunctionVisitor new(info as FunctionInfo) as Visitor
                     case InfoType _enum      => EnumVisitor new(info as EnumInfo) as Visitor
@@ -107,10 +118,10 @@ Codegen: class {
                     case InfoType object     => ObjectVisitor new(info as ObjectInfo) as Visitor
                     case InfoType constant   => ConstantVisitor new(info as ConstantInfo) as Visitor
                     case InfoType struct     => (!info as StructInfo isGTypeStruct?()) ? StructVisitor new(info as StructInfo) as Visitor : null
-                    case InfoType callback   => CallbackVisitor new(info as CallbackInfo) as Visitor
+                    case InfoType _interface => InterfaceVisitor new(info as InterfaceInfo) as Visitor
                     case                     => null as Visitor // We want to ignore generating symbols for some types of info, so we yield no error here
                 }
-                if(visitor) visitor write(writer)
+                if(visitor) visitor write(writer) . free()
                 info unref()
             }
             // Close up the destination file

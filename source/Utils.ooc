@@ -25,9 +25,10 @@ extend RegisteredTypeInfo {
 extend ArgInfo {
     // Returns the ooc type based on the current namespace
     oocType: func(namespace: String, parent: RegisteredTypeInfo = null, byValue?: Bool = false) -> String {
-        type := getType() toString()
+        type := getType() toString(namespace)
         iface := getType() getInterface() as RegisteredTypeInfo
-        if(iface) type = iface oocType(namespace, parent, byValue?)
+        if(iface && !iface isCallableInfo?()) type = iface oocType(namespace, parent, byValue?)
+        else if(iface) type = "Pointer"
         type
     }
 }
@@ -41,7 +42,7 @@ extend TypeInfo {
         tag isBasic?() && (tag != TypeTag gtype && tag != TypeTag utf8 && tag != TypeTag filename)
     }
 
-    toString: func -> String {
+    toString: func(namespace: String = "GLib") -> String {
         // TODO: Array types errors etc should be namespaced
         base := match(getTag()) {
             case TypeTag void       => "Void"
@@ -56,12 +57,12 @@ extend TypeInfo {
             case TypeTag uint64     => "UInt64"
             case TypeTag float      => "Float"
             case TypeTag double     => "Double"
-            case TypeTag gtype      => "Type"
+            case TypeTag gtype      => "Int"
             case TypeTag utf8       => "CString"
             case TypeTag filename   => "CString"
             case TypeTag glist      => "List"
             case TypeTag gslist     => "SList"
-            case TypeTag ghash      => "Hash"
+            case TypeTag ghash      => "HashTable"
             case TypeTag error      => "Error"
             case TypeTag unichar    => "UInt"
             case TypeTag _interface => getInterface() as RegisteredTypeInfo getName() toString() escapeOoc()
@@ -75,6 +76,7 @@ extend TypeInfo {
         }
 
         base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
+        if(namespace != "GLib" && (base == "Array" || base == "PtrArray" || base == "ByteArray" || base == "SList" || base == "List" || base == "HashTable" || base == "Error")) base = "(%s %s)" format("GLib", base)
         (base == "Void*") ? "Pointer" : base
     }
 }
@@ -107,6 +109,9 @@ extend String {
             case "cover"     => "_cover"
             case "inline"    => "_inline"
             case "null"      => "_null"
+            case "true"      => "_true"
+            case "false"     => "_false"
+            case "interface" => "_interface"
             case             => (this[0] digit?()) ? this prepend('_') : this
         }
     }

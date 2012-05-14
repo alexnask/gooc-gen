@@ -1,5 +1,5 @@
 use gi
-import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo, ArgInfo]
+import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo, ArgInfo, CallbackInfo]
 import OocWriter, Visitor, Utils, CallbackVisitor
 
 // Handle arguments of callback types (make them pointer, generate a second function that takes a closure and passes the context as a userData pointer if the function has one and the callback type has a last argument of pointer type)
@@ -9,12 +9,13 @@ FunctionVisitor: class extends Visitor {
     // Parent type (declaration)
     parent: RegisteredTypeInfo
     byValue? := false
+    prototype? := false
     forcedSuffix: String = null
 
     init: func(=info)
     init: func~withParent(=info, =parent)
     init: func~withByValue(=info, =parent, =byValue?)
-    init: func~withSuffix(=info, =parent, =forcedSuffix)
+    init: func~withSuffix(=info, =parent, =forcedSuffix, =prototype?)
 
     write: func(writer: OocWriter) {
         namespace := info getNamespace() toString()
@@ -34,9 +35,14 @@ FunctionVisitor: class extends Visitor {
         }
 
         // If the function is a structure members, this should be passed by reference
-        writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase() escapeOoc(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
-        if(suffix) writer uw("~" + suffix)
-        else if(forcedSuffix) writer uw("~" + forcedSuffix)
+        if(prototype?) {
+            writer w("%s: %s %s " format(name toString() toCamelCase() escapeOoc(), (isStatic?) ? "static" : "", (inValueStruct?) ? "func@" : "func"))
+        } else {
+            writer w("%s: %sextern(%s) %s " format(name toString() toCamelCase() escapeOoc(), (isStatic?) ? "static " : "", info getSymbol(), (inValueStruct?) ? "func@" : "func"))
+        }
+
+        if(suffix) writer uw("~%s " format(suffix))
+        else if(forcedSuffix) writer uw("~%s " format(forcedSuffix))
 
         // Write arguments
         first := true
@@ -48,7 +54,7 @@ FunctionVisitor: class extends Visitor {
 
             type := arg oocType(namespace, parent, inValueStruct?)
             if(iface := arg getType() getInterface()) {
-                if(callback := CallbackVisitor callback(iface getName() toString()))  {
+                if(callback := CallbackVisitor callback(iface getName() toString())) {
                     // If we are accessing a function type we see if we can rewrite it as an ooc closure and we set the type of the argument to a Pointer
                     type = "Pointer"
                     nextArg := (!last?) ? info getArg(i + 1) : null
@@ -85,15 +91,19 @@ FunctionVisitor: class extends Visitor {
         }
         // If the function can throw an error, we need to add an Error* argument :)
         if(info getFlags() & FunctionInfoFlags throws?) {
-            if(!first) writer uw(", error : Error*") // TODO: namespace error
-            else writer uw("(error : Error*)")
+            if(!first && namespace == "GLib") writer uw(", error : Error*") // TODO: namespace error
+            else if(namespace == "GLib") writer uw("(error : Error*)")
+            else if(!first) writer uw(", error: (GLib Error*)")
+            else writer uw("(error: (GLib Error*))")
         }
 
         if(!first) writer uw(") ")
         returnType := info getReturnType()
         iface := returnType getInterface() as RegisteredTypeInfo
-        if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
-        else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString()))
+        callback := (iface != null) ? CallbackVisitor callback(iface getName() toString()) : null
+        if(callback) writer uw("-> Pointer")
+        else if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
+        else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace)))
         writer uw("\n")
 
         // TODO: Code from here on is terrible, far too much repetition
@@ -147,27 +157,41 @@ FunctionVisitor: class extends Visitor {
             }
             // If the function can throw an error, we need to add an Error* argument :)
             if(info getFlags() & FunctionInfoFlags throws?) {
-                if(!first) writer uw(", error : Error*") // TODO: should be namespaced if necessary
-                else writer uw("(error : Error*")
+                if(!first && namespace == "GLib") writer uw(", error : Error*") // TODO: namespace error
+                else if(namespace == "GLib") writer uw("(error : Error*)")
+                else if(!first) writer uw(", error: (GLib Error*)")
+                else writer uw("(error: (GLib Error*))")
             }
-            writer uw(") {\n") . indent()
-            writer w("%s(" format(name toString() toCamelCase()))
-            first = true
-            for(i in 0..info getNArgs()) {
-                if(first) first = false
-                else writer uw(", ")
+            writer uw(") ")
+            returnType := info getReturnType()
+            iface := returnType getInterface() as RegisteredTypeInfo
+            callback := (iface != null) ? CallbackVisitor callback(iface getName() toString()) : null
+            if(callback) writer uw("-> Pointer")
+            else if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
+            else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace)))
 
-                if(i == closureIndex) {
-                    writer uw("%s as Closure thunk" format(closureName))
-                } else if(i == closureIndex + 1) {
-                    writer uw("%s as Closure context" format(closureName))
-                } else {
-                    arg := info getArg(i)
-                    writer uw(arg getName() toString() escapeOoc())
-                    arg unref()
+            if(!prototype?) {
+                writer uw(" {\n") . indent()
+                writer w("%s(" format(name toString() toCamelCase()))
+                first = true
+                for(i in 0..info getNArgs()) {
+                    if(first) first = false
+                    else writer uw(", ")
+
+                    if(i == closureIndex) {
+                        writer uw("%s as Closure thunk" format(closureName))
+                    } else if(i == closureIndex + 1) {
+                        writer uw("%s as Closure context" format(closureName))
+                    } else {
+                        arg := info getArg(i)
+                        writer uw(arg getName() toString() escapeOoc())
+                        arg unref()
+                    }
                 }
+                writer uw(")\n") . dedent() . w("}\n")
+            } else {
+                writer uw("\n")
             }
-            writer uw(")\n") . dedent() . w("}\n")
         }
     }
 }
