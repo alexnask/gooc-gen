@@ -14,7 +14,7 @@ ObjectVisitor: class extends Visitor {
         writer w("%s: cover from %s*" format(name, info cType()))
         parent := info getParent()
         if(parent) {
-            writer uw(" extends %s" format(parent oocType(namespace)))
+            writer uw(" extends %s" format(parent oocType(namespace, null, false, false)))
         }
         parent unref()
 

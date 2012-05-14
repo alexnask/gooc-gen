@@ -8,13 +8,13 @@ extend RegisteredTypeInfo {
         "%s%s" format(Repository getCPrefix(null, getNamespace()), getName())
     }
 
-    oocType: func(namespace: String, parent: This = null, byValue?: Bool = false) -> String {
+    oocType: func(namespace: String, parent: This = null, byValue? := false, pointerize := false) -> String {
         name := getName() toString() escapeOoc()
 
         // Temporary fix while #390 is still relevant
         if(name endsWith?("Class")) name = name append("_")
 
-        name = (getNamespace() toString() == namespace) ? name : "(%s %s)" format(getNamespace(), name)
+        name = (getNamespace() toString() == namespace) ? name : "(%s %s%s)" format(getNamespace(), name, pointerize ? "*" : "")
         if(parent && parent getName() toString() escapeOoc() == name) {
             name = (byValue?) ? "This*" : "This"
         }
@@ -26,7 +26,12 @@ extend ArgInfo {
     // Returns the ooc type based on the current namespace
     oocType: func(namespace: String, parent: RegisteredTypeInfo = null, byValue?: Bool = false) -> String {
         type := getType() toString(namespace)
-        iface := getType() getInterface() as RegisteredTypeInfo
+        t := getType()
+        iface := t getInterface() as RegisteredTypeInfo
+        while(t && t isPointer?() && iface) {
+            t = t getParamType(0)
+            iface = (t != null) ? t getInterface() as RegisteredTypeInfo : null
+        }
         if(iface && !iface isCallableInfo?()) type = iface oocType(namespace, parent, byValue?)
         else if(iface) type = "Pointer"
         type
@@ -42,7 +47,7 @@ extend TypeInfo {
         tag isBasic?() && (tag != TypeTag gtype && tag != TypeTag utf8 && tag != TypeTag filename)
     }
 
-    toString: func(namespace: String = "GLib") -> String {
+    toString: func(namespace: String = "GLib", pointerize := false) -> String {
         // TODO: Array types errors etc should be namespaced
         base := match(getTag()) {
             case TypeTag void       => "Void"
@@ -65,18 +70,20 @@ extend TypeInfo {
             case TypeTag ghash      => "HashTable"
             case TypeTag error      => "Error"
             case TypeTag unichar    => "UInt"
-            case TypeTag _interface => getInterface() as RegisteredTypeInfo getName() toString() escapeOoc()
+            case TypeTag _interface => return getInterface() as RegisteredTypeInfo oocType(namespace, null, false, pointerize); null
             case TypeTag array      =>
                 match(getArrayType()) {
                     case ArrayType array     => "Array"
                     case ArrayType ptrArray  => "PtrArray"
                     case ArrayType byteArray => "ByteArray"
-                    case ArrayType c         =>  "%s*" format(getParamType(0) toString())
+                    case ArrayType c         =>  "%s" format(getParamType(0) toString(namespace, true))
                 }
         }
 
-        base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
+        if(pointerize) base = "%s*" format(base)
+
         if(namespace != "GLib" && (base == "Array" || base == "PtrArray" || base == "ByteArray" || base == "SList" || base == "List" || base == "HashTable" || base == "Error")) base = "(%s %s)" format("GLib", base)
+        base = (this isPointer?() && this needsPointerization?()) ? "%s*" format(base) : base
         (base == "Void*") ? "Pointer" : base
     }
 }

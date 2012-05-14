@@ -103,7 +103,7 @@ FunctionVisitor: class extends Visitor {
         callback := (iface != null) ? CallbackVisitor callback(iface getName() toString()) : null
         if(callback) writer uw("-> Pointer")
         else if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
-        else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace)))
+        else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace, false)))
         writer uw("\n")
 
         // TODO: Code from here on is terrible, far too much repetition
@@ -168,7 +168,7 @@ FunctionVisitor: class extends Visitor {
             callback := (iface != null) ? CallbackVisitor callback(iface getName() toString()) : null
             if(callback) writer uw("-> Pointer")
             else if(iface) writer uw("-> %s" format(iface oocType(namespace, parent, inValueStruct?)))
-            else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace)))
+            else if(returnType toString() != "Void") writer uw("-> %s" format(returnType toString(namespace, false)))
 
             if(!prototype?) {
                 writer uw(" {\n") . indent()
