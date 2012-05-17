@@ -32,7 +32,7 @@ InterfaceContentsVisitor: class extends Visitor {
         // Write our methods
         for(i in 0 .. info getNMethods()) {
             method := info getMethod(i)
-            FunctionVisitor new(method, info, info getName() toString(), false) write(writer) . free()
+            FunctionVisitor new(method, info, info getName() toString(), namespace) write(writer) . free()
             method unref()
         }
         // Write our constants

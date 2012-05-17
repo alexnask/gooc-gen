@@ -117,7 +117,7 @@ Codegen: class {
                     case InfoType flags      => EnumVisitor new(info as EnumInfo) as Visitor
                     case InfoType object     => ObjectVisitor new(info as ObjectInfo) as Visitor
                     case InfoType constant   => ConstantVisitor new(info as ConstantInfo) as Visitor
-                    case InfoType struct     => (!info as StructInfo isGTypeStruct?()) ? StructVisitor new(info as StructInfo) as Visitor : null
+                    case InfoType struct     => StructVisitor new(info as StructInfo) as Visitor
                     case InfoType _interface => InterfaceVisitor new(info as InterfaceInfo) as Visitor
                     case InfoType union      => UnionVisitor new(info as UnionInfo) as Visitor
                     case                     => null as Visitor // We want to ignore generating symbols for some types of info, so we yield no error here

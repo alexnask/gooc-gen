@@ -2,7 +2,7 @@ use gi
 import gi/[BaseInfo, FunctionInfo, RegisteredTypeInfo, ArgInfo, CallbackInfo]
 import OocWriter, Visitor, Utils, CallbackVisitor
 
-// Handle arguments of callback types (make them pointer, generate a second function that takes a closure and passes the context as a userData pointer if the function has one and the callback type has a last argument of pointer type)
+// TODO: Fix bug where for some reason an ooc func prototype is written for an interface but no function declaration is written for objects that implement it
 
 FunctionVisitor: class extends Visitor {
     info: FunctionInfo
@@ -11,14 +11,17 @@ FunctionVisitor: class extends Visitor {
     byValue? := false
     prototype? := false
     forcedSuffix: String = null
+    forcedNamespace: String = null
 
     init: func(=info)
     init: func~withParent(=info, =parent)
     init: func~withByValue(=info, =parent, =byValue?)
     init: func~withSuffix(=info, =parent, =forcedSuffix, =prototype?)
+    init: func~withNamespace(=info, =parent, =forcedSuffix, =forcedNamespace)
 
     write: func(writer: OocWriter) {
         namespace := info getNamespace() toString()
+        if(forcedNamespace) namespace = forcedNamespace
         name := info getName()
         inValueStruct? := (parent != null && byValue?)
         isStatic? := false
@@ -188,6 +191,7 @@ FunctionVisitor: class extends Visitor {
                         arg unref()
                     }
                 }
+                if(info getFlags() & FunctionInfoFlags throws?) writer uw(", error")
                 writer uw(")\n") . dedent() . w("}\n")
             } else {
                 writer uw("\n")
