@@ -119,6 +119,7 @@ extend String {
             case "true"      => "_true"
             case "false"     => "_false"
             case "interface" => "_interface"
+            case "main"      => "_main"
             case             => (this[0] digit?()) ? this prepend('_') : this
         }
     }
